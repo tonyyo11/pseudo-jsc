@@ -13,6 +13,10 @@
 # Matches the upstream pseudo convention for known-safe patterns (escape-char in tr, jamf binary stdout, pluginkit array splitting).
 # shellcheck disable=SC1003,SC2012,SC2024,SC2207
 
+# pipefail and nounset only — errexit would abort on the script's intentional non-zero
+# exits (killall of optional processes, dscl/PlistBuddy reads against missing keys).
+set -uo pipefail
+
 # MARK: *** Startup Workflow ***
 ################################################################################
 
@@ -70,8 +74,11 @@ set_defaults() {
 }
 
 # Append input to the command line and log located at ${PSEUDO_LOG}.
+# Always returns 0 so a write failure on ${PSEUDO_LOG} (with pipefail) does not break
+# the script's `log_pseudo "..." && flag="TRUE"` error-marking pattern.
 log_pseudo() {
 	echo -e "$(date +"%a %b %d %T") $(hostname -s) $(basename "$0")[$$]: $*" | tee -a "${PSEUDO_LOG}"
+	return 0
 }
 
 # Exit the script with no errors.
@@ -86,6 +93,13 @@ workflow_startup() {
 	workflow_startup_error="FALSE"
 
 	set_defaults
+
+	# jq is a third-party dependency. Without it, app-sso parsing silently produces
+	# empty strings and the workflow falls through to a misleading "FALSE" state.
+	if ! command -v jq >/dev/null 2>&1; then
+		log_pseudo "Error: jq is required but not installed."
+		workflow_startup_error="TRUE"
+	fi
 
 	current_user_account_name=$(stat -f "%Su" /dev/console)
 
@@ -110,7 +124,10 @@ workflow_startup() {
 			log_pseudo "Error: The required Platform SSO software Okta Verify.app is not installed." && workflow_startup_error="TRUE"
 		fi
 	fi
-	[[ "${workflow_startup_error}" == "TRUE" ]] && log_pseudo "Error: Startup workflow failed."
+	if [[ "${workflow_startup_error}" == "TRUE" ]]; then
+		log_pseudo "Error: Startup workflow failed."
+		exit 1
+	fi
 }
 
 # MARK: *** Jamf Pro Integration ***
@@ -164,7 +181,7 @@ check_psso_user_status() {
 	[[ -z "${dscl_result}" ]] && psso_user_status_dscl="FALSE"
 	[[ -z "${psso_user_status_login_name}" ]] && psso_user_status_login_name="FALSE"
 	# Match any state containing "Normal" so future Apple format variations don't break the check.
-	[[ $(echo "${psso_user_status_state}" | grep -c 'Normal') -eq 0 ]] && psso_user_status_state="FALSE"
+	[[ "${psso_user_status_state}" != *Normal* ]] && psso_user_status_state="FALSE"
 	[[ -z "${psso_user_status_smartcard_token_id}" ]] && psso_user_status_smartcard_token_id="FALSE"
 }
 
@@ -276,7 +293,7 @@ EOAS
 open_jsc() {
 	killall "Setup Checklist"
 	/usr/local/bin/setupchecklist launch
-	/usr/local/bin/setupchecklist goto ${JSC_STEP_LABEL}
+	/usr/local/bin/setupchecklist goto "${JSC_STEP_LABEL}"
 }
 
 # Open the Platform SSO registration window. Returns "TRUE" on success or "FALSE" if any wait
@@ -351,6 +368,14 @@ EOAS
 workflow_psso() {
 	local workflow_psso_error
 	workflow_psso_error="FALSE"
+
+	# Initialize global state vars before any reference. Required under `set -u`:
+	# psso_workflow_active is otherwise only set conditionally inside the workflow.
+	psso_workflow_active="FALSE"
+	psso_user_status_dscl="FALSE"
+	psso_user_status_login_name="FALSE"
+	psso_user_status_state="FALSE"
+	psso_user_status_smartcard_token_id="FALSE"
 
 	check_psso_user_status
 	# Attempt an immediate open as AppleScript checks cause a delay in JSC.
@@ -433,7 +458,12 @@ workflow_psso() {
 	elif [[ "${psso_workflow_active}" == "TRUE" ]]; then
 		local registration_summary
 		registration_summary="Platform SSO is now registered for local user ${current_user_account_name} to account ${psso_user_status_login_name}"
-		[[ "${psso_user_status_smartcard_token_id}" != "FALSE" ]] && registration_summary="${registration_summary} (SmartCard token: ${psso_user_status_smartcard_token_id})"
+		# Truncate the SmartCard token ID before logging: full token + UPN in a user-readable
+		# log is more identity correlation than is needed for diagnosing registration.
+		if [[ "${psso_user_status_smartcard_token_id}" != "FALSE" ]]; then
+			local token_suffix="${psso_user_status_smartcard_token_id: -8}"
+			registration_summary="${registration_summary} (SmartCard token: …${token_suffix})"
+		fi
 		log_pseudo "Status: ${registration_summary}."
 	else
 		log_pseudo "Status: Platform SSO is already registered for local user ${current_user_account_name} to account ${psso_user_status_login_name}."
