@@ -1,0 +1,38 @@
+<dict>
+	<key>title</key>
+	<string>Register for Platform SSO</string>
+	<key>message</key>
+	<string>Platform SSO allows your computer to sync its password to your organizational account, and enables sign-ins across most of our platforms.</string>
+	<key>kind</key>
+	<string>script</string>
+	<key>identifier</key>
+	<string>script-psso</string>
+	<key>icon</key>
+	<string>/Applications/Company Portal.app</string>
+	<key>buttonLabel</key>
+	<string>Register for PSSO</string>
+	<key>windowPosition</key>
+	<string>left</string>
+	<key>openAutomatically</key>
+	<true/>
+	<key>buttonScript</key>
+	<string>
+        if [[ $(ps aux | grep $(whoami) | grep -c "pseudo-jsc") == "1"  &amp;&amp; $(setupchecklist status script-psso) == "suggested" ]]; then
+            /Library/Application\ Support/SetupChecklistHelpers/pseudo-jsc.sh &amp;
+        fi
+    </string>
+	<key>updateStatusScript</key>
+	<string>
+        if [[ $(ps aux | grep $(whoami) | grep -c "gatherAADInfo") == "1" ]]; then
+            app-sso platform -s | grep -q "POUserStateNormal"
+        else
+            exit 1
+        fi
+    </string>
+	<key>prepareScript</key>
+	<string>
+        if [[ $(app-sso platform -s | grep -c "POUserStateNormal") == "1" ]]; then
+            setupchecklist status script-psso completed
+        fi
+    </string> 
+</dict>

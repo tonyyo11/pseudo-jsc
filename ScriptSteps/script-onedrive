@@ -1,0 +1,31 @@
+<dict>
+	<key>title</key>
+	<string>Sign in to OneDrive</string>
+	<key>message</key>
+	<string>OneDrive is used to store all your work related documents. This will sync your Desktop and Documents folder to the cloud.</string>
+	<key>kind</key>
+	<string>script</string>
+	<key>identifier</key>
+	<string>script-onedrive</string>
+	<key>icon</key>
+	<string>/Applications/OneDrive.app</string>
+	<key>buttonLabel</key>
+	<string>Open OneDrive</string>
+	<key>buttonScript</key>
+	<string>
+        open /Applications/OneDrive.app
+    </string>
+	<key>updateStatusScript</key>
+	<string>
+        plutil -extract "AccountInfo_Business1" raw ~/Library/Group\ Containers/UBF8T346G9.OneDriveStandaloneSuite/Library/Preferences/UBF8T346G9.OneDriveStandaloneSuite.plist | grep -q "LastKFMOptInTime"
+    </string>
+	<key>activateScript</key>
+	<string>
+        if [[ $(setupchecklist status script-onedrive) == "suggested" ]];then
+            while [[ $(setupchecklist status script-onedrive) == "suggested" ]]; do
+                     sleep 0.25
+            done
+            osascript -e 'tell application "System Events" to make login item at end with properties {path:"/Applications/OneDrive.app", hidden:false}'
+        fi
+    </string>
+</dict>

@@ -1,0 +1,32 @@
+<dict>
+	<key>icon</key>
+	<string>symbol:slider.horizontal.2.square.on.square</string>
+	<key>identifier</key>
+	<string>welcome-message</string>
+	<key>image</key>
+	<string>name:Computer</string>
+	<key>kind</key>
+	<string>script</string>
+	<key>message</key>
+	<dict>
+		<key>en</key>
+		<string>Just a few more steps to configure your new Mac.</string>
+	</dict>
+	<key>activateScript</key>
+	<string>
+        if [[ $(setupchecklist status welcome-message) != "completed" ]]; then
+            sleep 2 &amp;&amp; /Library/Application\ Support/SetupChecklistHelpers/dockCleanup.sh &amp;
+            for i in range {2..7}; do
+                sleep $i &amp;&amp; /Library/Application\ Support/SetupChecklistHelpers/clearNotifications.sh &amp;
+            done
+            setupchecklist status welcome-message completed
+        fi
+    </string>
+	<key>buttonLabel</key>
+	<string>Click the "Continue" button below</string>
+	<key>title</key>
+	<dict>
+		<key>en</key>
+		<string>Welcome to Setup Checklist</string>
+	</dict>
+</dict>

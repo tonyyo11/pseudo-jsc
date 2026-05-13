@@ -1,0 +1,42 @@
+<dict>
+	<key>title</key>
+	<string>Enroll in Touch ID</string>
+	<key>message</key>
+	<string>Touch ID allows you to log into your device and authorize certain actions using your fingerprint. We recommend setting this up to provide improved security to your device and credentials.</string>
+	<key>kind</key>
+	<string>script</string>
+	<key>identifier</key>
+	<string>script-touchid</string>
+	<key>icon</key>
+	<string>symbol:touchid</string>
+	<key>buttonLabel</key>
+	<string>Open Touch ID Settings</string>
+	<key>windowPosition</key>
+	<string>left</string>
+	<key>openAutomatically</key>
+	<true/>
+	<key>buttonScript</key>
+	<string>
+        if [[ $(setupchecklist status script-touchid) == "suggested" ]]; then
+            open "x-apple.systempreferences:com.apple.Touch-ID-Settings.extension"
+        fi
+    </string>
+	<key>updateStatusScript</key>
+	<string>
+        if [[ $(stat -f "%Su" /dev/console) != "temporary_session"* ]];then
+            exit $(bioutil -c | grep -c "0 biometric")
+        else
+            exit 0
+        fi
+    </string>
+	<key>prepareScript</key>
+	<string>
+        if [[ $(stat -f "%Su" /dev/console) == "temporary_session"* ]]; then
+            setupchecklist status script-touchid completed
+        fi
+    </string>
+	<key>willContinueScript</key>
+	<string>
+        killall "System Settings"
+    </string>
+</dict>

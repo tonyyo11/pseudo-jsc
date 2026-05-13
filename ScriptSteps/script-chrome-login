@@ -1,0 +1,32 @@
+<dict>
+	<key>title</key>
+	<string>Sign in to Google Chrome</string>
+	<key>message</key>
+	<string>Google Chrome is the preferred web browser for this organization. Sign in to begin syncing your district bookmarks and passwords.</string>
+	<key>kind</key>
+	<string>script</string>
+	<key>identifier</key>
+	<string>script-chrome-login</string>
+	<key>icon</key>
+	<string>/Applications/Google Chrome.app</string>
+	<key>buttonLabel</key>
+	<string>Open Google Chrome</string>
+	<key>buttonScript</key>
+	<string>
+        open /Applications/Google\ Chrome.app
+    </string>
+	<key>activateScript</key>
+	<string>
+        if [[ $(setupchecklist status script-chrome-login) == "suggested" ]]; then
+            while [[ $(setupchecklist status script-chrome-login) == "suggested" ]]; do
+                sleep 0.25
+            done
+            killall "Google Chrome"
+            /Library/Application\ Support/SetupChecklistHelpers/clearNotifications.sh &amp;
+        fi
+    </string>
+	<key>updateStatusScript</key>
+	<string>
+        cat ~/Library/Application\ Support/Google/Chrome/Local\ State | grep -q "first_run_finished"
+    </string>
+</dict>
