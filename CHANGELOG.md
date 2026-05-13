@@ -26,6 +26,11 @@
 - Unused config constant `JAMF_PRO_BINARY` (never referenced — JSC user-context can't shell out to `/usr/local/bin/jamf` directly; the `jamfselfservice://` URL is the actual mechanism).
 - Unused function `hide_all_apps()` (defined but never called by any code path).
 
+## Post-0.1.0 work
+
+### Fixed
+- `main()` now checks the return code from `workflow_psso` and skips post-PSSO actions (`jamf_pro_update_inventory`, `jamf_pro_manual_comliance_registration`) when the workflow did not complete successfully. Previously the inventory Self Service policy fired after a PSSO timeout or missing-SmartCard failure, producing misleading downstream reporting.
+
 ### Upstream sources at fork time
 - [Macjutsu/pseudo](https://github.com/Macjutsu/pseudo) 1.0.0-beta5, commit `2d942ca`. Source for the SmartCard logic.
 - [sebLuns/SetupChecklistAssets](https://github.com/sebLuns/SetupChecklistAssets), commit `53a0365`. Source for the user-context JSC adaptation and the surrounding repo layout.

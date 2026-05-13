@@ -444,16 +444,24 @@ workflow_psso() {
 ################################################################################
 
 main() {
-
 	workflow_startup # This function only completes if the system and user are ready to complete further workflows.
-	workflow_psso # This function only completes if the user has successfully registred with Platform SSO.
+	workflow_psso # Returns 0 on success or 1 if PSSO registration did not complete (timeout, missing SmartCard, etc.).
+	local workflow_psso_result=$?
+
 	update_inventory_error="FALSE"
 	manual_compliance_error="FALSE"
-	[[ "${UPDATE_JAMF_PRO}" == "TRUE" ]] && jamf_pro_update_inventory # This function only updates Jamf Pro inventory if a workflow actually ran.
-	[[ "${MANUAL_DEVICE_COMPLIANCE_REGISTRATION}" == "TRUE" ]] && jamf_pro_manual_comliance_registration # This function only updates Jamf Pro inventory if a workflow actually ran.
+
+	# Only run post-PSSO actions when PSSO actually succeeded. Firing a Self Service inventory policy
+	# after a failed registration is wasteful and misleads downstream reporting.
+	if [[ ${workflow_psso_result} -eq 0 ]]; then
+		[[ "${UPDATE_JAMF_PRO}" == "TRUE" ]] && jamf_pro_update_inventory
+		[[ "${MANUAL_DEVICE_COMPLIANCE_REGISTRATION}" == "TRUE" ]] && jamf_pro_manual_comliance_registration
+	else
+		log_pseudo "Status: Skipping post-PSSO inventory and compliance actions because the Platform SSO workflow did not complete successfully."
+	fi
+
 	[[ "${update_inventory_error}" == "TRUE" ]] && log_pseudo "Error: Unable to complete requested inventory update."
 	[[ "${manual_compliance_error}" == "TRUE" ]] && log_pseudo "Error: Unable to complete requested manual device compliance."
-
 }
 
 main "$@"
