@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: MacAdmins Slack — #pseudo
+    url: https://macadmins.slack.com/archives/C0AFEC0S2KX
+    about: For general Platform SSO discussion, configuration questions, or quick troubleshooting, drop into the upstream pseudo channel on the MacAdmins Foundation Slack.
+  - name: Upstream — Macjutsu/pseudo
+    url: https://github.com/Macjutsu/pseudo/issues
+    about: If your issue is about the core PSSO workflow (not the JSC user-context adaptation or SmartCard support in this fork), it likely belongs upstream.

@@ -31,6 +31,12 @@
 ### Fixed
 - `main()` now checks the return code from `workflow_psso` and skips post-PSSO actions (`jamf_pro_update_inventory`, `jamf_pro_manual_comliance_registration`) when the workflow did not complete successfully. Previously the inventory Self Service policy fired after a PSSO timeout or missing-SmartCard failure, producing misleading downstream reporting.
 
+### Added
+- GitHub issue templates in `.github/ISSUE_TEMPLATE/`:
+  - `bug_report.yml` — required fields for macOS version, PSSO auth method, IdP, JSC version, deployment prerequisite checkboxes, and a log excerpt.
+  - `feature_request.yml` — problem / proposal / alternatives.
+  - `config.yml` — disables blank issues; routes general PSSO questions to the MacAdmins `#pseudo` Slack channel and core upstream bugs to `Macjutsu/pseudo` issues.
+
 ### Upstream sources at fork time
 - [Macjutsu/pseudo](https://github.com/Macjutsu/pseudo) 1.0.0-beta5, commit `2d942ca`. Source for the SmartCard logic.
 - [sebLuns/SetupChecklistAssets](https://github.com/sebLuns/SetupChecklistAssets), commit `53a0365`. Source for the user-context JSC adaptation and the surrounding repo layout.
