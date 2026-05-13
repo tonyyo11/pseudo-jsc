@@ -2,6 +2,8 @@
 # Clears all notifications from the Notification Center.
 # Works for both single notifications and grouped notifications.
 
+set -euo pipefail
+
 osascript <<EOAS
 tell application "System Events"
 	tell process "NotificationCenter"
